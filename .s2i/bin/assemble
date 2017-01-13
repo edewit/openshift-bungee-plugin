@@ -1,13 +1,11 @@
 #!/bin/bash
-echo "Download Bungeecord server"
-
-mkdir target
-wget http://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar -o target/BungeeCord.jar
 
 /usr/libexec/s2i/assemble
 rc=$?
 
 if [ $rc -eq 0 ]; then
+    echo "Download Bungeecord server"
+    wget http://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/artifact/bootstrap/target/BungeeCord.jar -o target/BungeeCord.jar
     echo "Install plugin"
     mkdir target/plugins
     mv target/openshift-bungeecord-plugin*.jar target/plugins
