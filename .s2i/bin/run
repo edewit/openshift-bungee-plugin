@@ -1,1 +1,5 @@
+APP_TARGET=${APP_TARGET:-target}
+echo "--> # APP_TARGET = $APP_TARGET"
+echo "--> # JAVA_OPTS = $JAVA_OPTS"
+echo "---> running server"
 java $JAVA_OPTS -jar $APP_TARGET/BungeeCord.jar
