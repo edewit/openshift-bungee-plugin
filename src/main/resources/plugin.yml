@@ -1,4 +1,4 @@
 name: ${project.artifactId}
-main: pw.teg.bsm.BungeeServerManager
+main: ch.nerdin.minecraft.bungeecord.OpenshiftPlugin
 version: ${project.version}
-author: Teg
+author: Erik Jan de Wit
