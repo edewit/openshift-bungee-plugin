@@ -68,6 +68,6 @@ public class CreatePodCommand extends Command {
     }
 
     private String getServerName(String playerName) {
-        return MINECRAFT_SERVER_NAME + "-" + playerName;
+        return MINECRAFT_SERVER_NAME + "-" + playerName.toLowerCase();
     }
 }
