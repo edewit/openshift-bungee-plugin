@@ -49,7 +49,7 @@ public class CreatePodCommand extends Command {
 
         final DoneablePod spec = client.pods().createNew().withNewSpecLike(template.getSpec()).endSpec();
         final Pod pod = spec.withMetadata(new ObjectMetaBuilder().withName(name)
-                .withNamespace(template.getMetadata().getNamespace()).build()).done();
+                .withNamespace(MINECRAFT_SERVER_NAME).build()).done();
 
         Controller controller = new Controller(client);
         try {
