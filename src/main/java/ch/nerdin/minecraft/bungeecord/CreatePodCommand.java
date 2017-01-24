@@ -48,7 +48,8 @@ public class CreatePodCommand extends Command {
         final PodTemplateSpec template = findMinecraftServerTemplate(client);
 
         final DoneablePod spec = client.pods().createNew().withNewSpecLike(template.getSpec()).endSpec();
-        final Pod pod = spec.withMetadata(new ObjectMetaBuilder().withName(name).build()).done();
+        final Pod pod = spec.withMetadata(new ObjectMetaBuilder().withName(name)
+                .withNamespace(template.getMetadata().getNamespace()).build()).done();
 
         Controller controller = new Controller(client);
         try {
