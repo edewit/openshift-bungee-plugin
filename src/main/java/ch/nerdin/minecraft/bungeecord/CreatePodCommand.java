@@ -73,13 +73,13 @@ public class CreatePodCommand extends Command {
                 List<Pod> pods = client.pods().list().getItems();
                 pods.stream()
                         .filter(p -> p.getMetadata().getUid().equals(pod.getMetadata().getUid()))
-                        .filter(KubernetesHelper::isPodReady).forEach(p -> {
+                        .filter(KubernetesHelper::isPodRunning).forEach(p -> {
                     callback.event(p);
                     timer.cancel();
                 });
             }
         };
-        timer.schedule(task, 2000);
+        timer.schedule(task, 2000, 2000);
     }
 
     private PodTemplateSpec findMinecraftServerTemplate(KubernetesClient kube) {
