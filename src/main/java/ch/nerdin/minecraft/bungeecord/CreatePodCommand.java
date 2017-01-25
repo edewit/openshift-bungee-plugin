@@ -1,6 +1,7 @@
 package ch.nerdin.minecraft.bungeecord;
 
 import io.fabric8.kubernetes.api.Controller;
+import io.fabric8.kubernetes.api.KubernetesHelper;
 import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
@@ -10,14 +11,17 @@ import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Command;
 
 import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 
 /**
  * Created by edewit on 20/12/16.
  */
 public class CreatePodCommand extends Command {
-
     private static final String MINECRAFT_SERVER_NAME = "minecraft-server";
+    private KubernetesClient client = new DefaultKubernetesClient();
 
     public CreatePodCommand() {
         super("openshift", "openshift.pod.create", "opc");
@@ -28,10 +32,10 @@ public class CreatePodCommand extends Command {
         createPod(commandSender.getName());
     }
 
-    private void createPod(final String playerName) {
-        final String podIP = createPodForPlayer(playerName);
+    protected void createPod(final String playerName) {
+        final Pod pod = createPodForPlayer(playerName);
 
-        addToProxy(playerName, podIP);
+        waitUntilPodStarted(client, pod, (p) -> addToProxy(playerName, p.getStatus().getPodIP()));
     }
 
     private void addToProxy(String playerName, String podIP) {
@@ -42,9 +46,8 @@ public class CreatePodCommand extends Command {
         ProxyServer.getInstance().getServers().put(name, serverInfo);
     }
 
-    private String createPodForPlayer(String playerName) {
+    private Pod createPodForPlayer(String playerName) {
         final String name = getServerName(playerName);
-        KubernetesClient client = new DefaultKubernetesClient();
         final PodTemplateSpec template = findMinecraftServerTemplate(client);
 
         final DoneablePod spec = client.pods().createNew().withNewSpecLike(template.getSpec()).endSpec();
@@ -58,7 +61,25 @@ public class CreatePodCommand extends Command {
             final String msg = String.format("could not create minecraft instance for player (%s)", name);
             ProxyServer.getInstance().getLogger().log(Level.ALL, msg, e);
         }
-        return pod.getStatus().getPodIP();
+
+        return pod;
+    }
+
+    private void waitUntilPodStarted(KubernetesClient client, Pod pod, PodStartedEvent callback) {
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                List<Pod> pods = client.pods().list().getItems();
+                pods.stream()
+                        .filter(p -> p.getMetadata().getUid().equals(pod.getMetadata().getUid()))
+                        .filter(KubernetesHelper::isPodReady).forEach(p -> {
+                    callback.event(p);
+                    timer.cancel();
+                });
+            }
+        };
+        timer.schedule(task, 2000);
     }
 
     private PodTemplateSpec findMinecraftServerTemplate(KubernetesClient kube) {
@@ -70,5 +91,9 @@ public class CreatePodCommand extends Command {
 
     private String getServerName(String playerName) {
         return MINECRAFT_SERVER_NAME + "-" + playerName.toLowerCase();
+    }
+
+    private interface PodStartedEvent {
+        void event(Pod pod);
     }
 }
